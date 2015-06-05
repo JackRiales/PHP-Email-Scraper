@@ -51,12 +51,18 @@ class Crawler {
 		$this->depth = $depth;
 		$host_parse = parse_url($url);
 		$this->host = $host_parse['host'];
+		if ($this->debug) { echo ("<br>Crawler generated.<br>URL: ".$this->url."<br>Host is ".$this->host."."); }
 	}
 	
 	// === PROTECTED INTERNAL FUNCTIONS ===
 	
 	// Get content (src, return codes, etc) from the URL
 	protected function get_content($url) {
+		if ($this->debug) { echo ("Obtaining content<br>"); }
+		
+		// Trim newlines
+		$url = trim($url);
+		
 		// Begin a curl session on the URL
 		$ch = curl_init($url);
 		
@@ -73,6 +79,10 @@ class Crawler {
 		$response 	= curl_exec($ch);											// Get the HTML or whatever is returned
 		$time			= curl_getinfo($ch, CURLINFO_TOTAL_TIME);			// Get the reponse time
 		$code			= curl_getinfo($ch, CURLINFO_HTTP_CODE);			// Get any code we get, like a 404
+
+		if ($response === false) {
+			echo "cURL Error: " . curl_error($ch);
+		}
 		
 		// Close the curl session
 		curl_close($ch);
@@ -84,7 +94,7 @@ class Crawler {
 	// Obtains links from a given DOM document using anchor tags.
 	// Also ensures that said links are uniformly formatted.
 	// i.e. http://www.host.com/anchor
-	protected function process_anchors($content, $url, $depth) {		
+	protected function process_anchors($content, $url, $depth) {			
 		// Begin a new DOM document
 		$dom = new DOMDocument('1.0');
 		
@@ -123,6 +133,7 @@ class Crawler {
 				  	$href .= $path;
             }
 			}
+			
 			// Recursively call the crawl function on the finalized link.
 			// Decrement depth.
          $this->crawl($href, $depth - 1);
@@ -131,17 +142,22 @@ class Crawler {
 	
 	// Function determines if a new link should be validated, allowing it to be processed
 	// Returns: boolean
-	protected function validate_url($url, $depth) {
-		if (
-			// Check to see if the hosts are the same by checking string position
-			strpos($url, $this->host) === false		||
-			
-			// If depth is zero, crawl recursion stops and no links can be validated
-			$depth === 0									||
-			
-			// If a URL has already been processed, it must not be validated again
-			isset($this->seen[$url])
-		) {
+	protected function validate_url($url, $depth) {		
+		// Check to see if the hosts are the same by checking string position
+		if (strpos($url, $this->host) === false) {
+			if ($this->debug) { print("Hosts are not the same.<br>"); }
+			return false;
+		}		
+		
+		// If depth is zero, crawl recursion stops and no links can be validated
+		if ($depth === 0) {
+			if ($this->debug) { print("Depth is zero.<br>"); }
+			return false;
+		}		
+		
+		// If a URL has already been processed, it must not be validated again
+		if (isset($this->seen[$url])) {
+			if ($this->debug) { print("URL already processed.<br>"); }
 			return false;
 		}
 		
@@ -149,6 +165,7 @@ class Crawler {
 		foreach($this->filter as $exclude) {
 			// Check string position for the filter path. If it's there, no validation.
 			if (strpos($url, $exclude) !== false) {
+				if ($this->debug) { print("Didnt validate on filter exclusion.<br>"); }
 				return false;
 			}
 		}
@@ -157,6 +174,7 @@ class Crawler {
 		foreach ($this->file_type_filter as $exclude) {
 			// Once again, check the string position for the type.
 			if (strpos($url, $exclude) !== false) {
+				if ($this->debug) { print("Didnt validate on file type exclusion.<br>"); }
 				return false;
 			}
 		}
@@ -165,9 +183,12 @@ class Crawler {
 		return true;
 	}
 	
+	// Validates and crawls the given url
 	protected function crawl($url, $depth) {
+		
 		// Check for crawl validation
 		if (!$this->validate_url($url, $depth)) {
+			if($this->debug) { echo $url." not validated.<br><br>"; }
 			return;
 		}
 		
@@ -221,7 +242,7 @@ class Crawler {
 	// Starts the crawler on the initial URL
 	public function run() {
 		if ($this->debug) {
-			echo '<br>Running crawler on '.$this->url.'<br>';
+			echo '<br><br>Running crawler on '.$this->url.'<br>';
 		}
 		$this->crawl($this->url, $this->depth);
 	}

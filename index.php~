@@ -162,17 +162,23 @@
 	</head>
 	
 	<body>
+		<!-- USER INPUT FORM -->
 		<?php if(!isset($_GET["url"])): ?>
 		<!-- Form to put into $_GET['url'] -->
 		<h1>PHP Email Retriever</h1>
 		<p>Enter a URL (or a set of them), and you will receive any email text found in the website's source code.</p>
 		<p>USE AT YOUR OWN RISK. I'M NOT RESPONSIBLE FOR WHO YOU PISS OFF WITH THIS.</p><br>
+		
 		<form action="" method="get">
-			URLs (One per line): <textarea type="text" name="url" required></textarea><br>
+			Input URLs. Ensure the following format, for best results 'http://www.example.com/': 
+			<textarea type="text" name="url" required></textarea><br>
+			
 			<button>GO!</button>
 			Crawl Depth: <input type="number" name="depth" min="1" max="8" required><br>
 			Output to file: <input type="checkbox" name="file"><br>
 		</form>
+		
+		<!-- APP -->
 		<?php else: ?>
 		<table border="2">
 			<tr>
@@ -180,7 +186,10 @@
 				<td>Email found</td>
 			</tr>
 			<?php
+				// Split the lines
 				$links = explode("\n", $_GET['url']);
+				
+				// Use the email function
 				print_multi_site_emails($links, $_GET['depth'], isset($_GET['file']));
 			?>
 		</table>

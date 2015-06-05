@@ -170,7 +170,8 @@
 		<p>USE AT YOUR OWN RISK. I'M NOT RESPONSIBLE FOR WHO YOU PISS OFF WITH THIS.</p><br>
 		
 		<form action="" method="get">
-			URLs (One per line): <textarea type="text" name="url" required></textarea><br>
+			Input URLs. Ensure the following format, for best results 'http://www.example.com/': 
+			<textarea type="text" name="url" required></textarea><br>
 			
 			<button>GO!</button>
 			Crawl Depth: <input type="number" name="depth" min="1" max="8" required><br>
@@ -185,7 +186,10 @@
 				<td>Email found</td>
 			</tr>
 			<?php
+				// Split the lines
 				$links = explode("\n", $_GET['url']);
+				
+				// Use the email function
 				print_multi_site_emails($links, $_GET['depth'], isset($_GET['file']));
 			?>
 		</table>
